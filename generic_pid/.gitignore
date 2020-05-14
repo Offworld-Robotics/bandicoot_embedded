@@ -1,0 +1,5 @@
+*.o
+*.pdf
+*.dSYM/
+pid
+fix_test
