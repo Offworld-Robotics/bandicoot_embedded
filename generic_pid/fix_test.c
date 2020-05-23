@@ -96,11 +96,11 @@ static void test_fixAdd(void) {
 
     /* fix_t overflowPos = fixAdd(FIX_POINT(8000000), FIX_POINT(8000000)); */
     fix_t overflowPos = fixAdd(FIX_POINT(30000), FIX_POINT(30000));
-    assert(overflowPos == fixPointMax);
+    assert(overflowPos == fixOverflow);
 
     /* fix_t overflowNeg = fixAdd(FIX_POINT(-8000000), FIX_POINT(-8000000)); */
     fix_t overflowNeg = fixAdd(FIX_POINT(-30000), FIX_POINT(-30000));
-    assert(overflowNeg == fixPointMin);
+    assert(overflowNeg == fixOverflow);
 }
 
 static void test_fixSubtract(void) {
@@ -127,11 +127,11 @@ static void test_fixSubtract(void) {
 
     /* fix_t overflowPos = fixSubtract(FIX_POINT(8000000), FIX_POINT(-8000000)); */
     fix_t overflowPos = fixSubtract(FIX_POINT(30000), FIX_POINT(-30000));
-    assert(overflowPos == fixPointMax);
+    assert(overflowPos == fixOverflow);
 
     /* fix_t overflowNeg = fixSubtract(FIX_POINT(-8000000), FIX_POINT(8000000)); */
     fix_t overflowNeg = fixSubtract(FIX_POINT(-30000), FIX_POINT(30000));
-    assert(overflowNeg == fixPointMin);
+    assert(overflowNeg == fixOverflow);
 }
 
 static void test_fixMultiply(void) {
@@ -156,10 +156,10 @@ static void test_fixMultiply(void) {
     assert(roundedDecimals == FIX_POINT(10.0006103515625));
 
     fix_t overflowPos = fixMultiply(FIX_POINT(2000), FIX_POINT(5000));
-    assert(overflowPos == fixPointMax);
+    assert(overflowPos == fixOverflow);
 
     fix_t overflowNeg = fixMultiply(FIX_POINT(-2000), FIX_POINT(5000));
-    assert(overflowNeg == fixPointMin);
+    assert(overflowNeg == fixOverflow);
 }
 
 #ifdef DEBUG_TOOLS

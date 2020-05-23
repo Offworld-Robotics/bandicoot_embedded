@@ -26,20 +26,41 @@ fix_t runControlAlgorithm(PIDController controller) {
         return 0;
     
     // Calculate difference between setpoint and measurement
-    fix_t error = *(controller->setpoint) - *(controller->feedback);
+    fix_t error = fixSubtract(*(controller->setpoint), *(controller->feedback));
+    if (error == fixOverflow) return fixOverflow;
 
-    // Calculate P, I and D controller terms
+    // Calculate P, I and D controller terms, ensuring overflow does not occur
+    // in each operation.
+
+    // Proportional term
     fix_t pTerm = fixMultiply(controller->kp, error);
+    if (pTerm == fixOverflow) return fixOverflow;
 
+    // Integral term
     fix_t deltaI = fixMultiply(controller->ki, error);
-    deltaI = fixMultiply(deltaI, controller->sampleTime); 
-    controller->iTerm += deltaI;
+    if (deltaI == fixOverflow) return fixOverflow;
 
-    fix_t dTerm = fixMultiply(controller->kd, (error - controller->prevError));
+    deltaI = fixMultiply(deltaI, controller->sampleTime); 
+    if (deltaI == fixOverflow) return fixOverflow;
+
+    fix_t iTerm = fixAdd(controller->iTerm, deltaI);
+    if (iTerm == fixOverflow) return fixOverflow;
+
+    controller->iTerm = iTerm;
+
+    // Derivative Term
+    fix_t errorDiff = fixSubtract(error, controller->prevError);
+    if (errorDiff == fixOverflow) return fixOverflow;
+
+    fix_t dTerm = fixMultiply(controller->kd, errorDiff);
+    if (dTerm == fixOverflow) return fixOverflow;
+
     dTerm = fixMultiply(dTerm, controller->sampleFreq);
+    if (dTerm == fixOverflow) return fixOverflow;
 
     // Sum to make total control signal
-    fix_t controlSignal = pTerm + controller->iTerm + dTerm;
+    fix_t controlSignal = fixAdd(fixAdd(pTerm, iTerm), dTerm);
+    if (controlSignal == fixOverflow) return fixOverflow;
 
     // Saturate control signal if required
     if (controlSignal < controller->outputMin)

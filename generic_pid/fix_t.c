@@ -30,12 +30,15 @@ fix_t fixAdd(fix_t x, fix_t y) {
     // sign of the sum is different.
     if (haveSameSign(_x, _y) && !haveSameSign(_x, result)) {
         // Overflow has occurred
+        return fixOverflow;
+        /*
         if (getSign(_x) == SIGN_POSITIVE)
             // Saturate at positive limit
             return fixPointMax;
         else
             // Saturate at negative limit
             return fixPointMin;
+        */
     }
 
     return result;
@@ -51,12 +54,15 @@ fix_t fixSubtract(fix_t x, fix_t y) {
     // of the subtraction is different to x.
     if (!haveSameSign(_x, _y) && !haveSameSign(_x, result)) {
         // Overflow has occurred
+        return fixOverflow;
+        /*
         if (getSign(_x) == SIGN_POSITIVE)
             // Saturate at positive limit
             return fixPointMax;
         else
             // Saturate at negative limit
             return fixPointMin;
+        */
     }
 
     return result;
@@ -86,9 +92,11 @@ fix_t fixMultiply(fix_t x, fix_t y) {
     word_t hiBits = (word_t)(result >> signBitsShift);
     
     if (resultSign == SIGN_POSITIVE && hiBits != 0)
-        return fixPointMax;
+        // Positive overflow
+        return fixOverflow;
     else if (resultSign == SIGN_NEGATIVE && ((~hiBits) & signBitsMask) != 0)
-        return fixPointMin;
+        // Negative overflow
+        return fixOverflow;
     else
         return (fix_t)(result >> Q_POINT);
 

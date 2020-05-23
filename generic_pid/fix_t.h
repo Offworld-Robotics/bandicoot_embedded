@@ -36,22 +36,15 @@
 // The fix_t type is only for fixed point number representation. Any other data
 // should use the word_t type or int_t type.
 typedef uint32_t word_t;
-typedef int32_t int_t;
 typedef int32_t fix_t;
 
 // Double-length datatype for multiplication
-typedef int64_t dint_t;
 typedef uint64_t dword_t;
+typedef int64_t dint_t;
 
 // ============================================================================
 // The following definitions do NOT need to be modified
 // ============================================================================
-
-typedef enum shiftDirection {
-    LEFT,
-    RIGHT
-} ShiftDirection;
-
 typedef enum sign {
     SIGN_POSITIVE,
     SIGN_NEGATIVE
@@ -78,11 +71,16 @@ static const word_t signMask = (word_t)1 << (WORD_SIZE - 1);
 
 // Define largest possible representable value
 // All bits except the sign bit are 1
-static const fix_t fixPointMax = (fix_t)(~signMask);
+// static const fix_t fixPointMax = (fix_t)(~signMask);
 
 // Define smallest possible representable value
 // Only the sign bit is 1
-static const fix_t fixPointMin = (fix_t)signMask;
+// static const fix_t fixPointMin = (fix_t)signMask;
+
+// Constant representing an overflow has occurred in a fixed-point operation.
+// Defined as the most negative possible value which is least likely to be
+// legitimately calculated.
+static const fix_t fixOverflow = (fix_t)signMask;
 
 // ============================================================================
 // Function Definitions
@@ -93,7 +91,5 @@ fix_t fixAdd(fix_t x, fix_t y);
 fix_t fixSubtract(fix_t x, fix_t y);
 
 fix_t fixMultiply(fix_t x, fix_t y);
-
-/* fix_t fixMultiply_preshift(fix_t x, fix_t y, uint8_t shift, ShiftDirection direction); */
 
 #endif
