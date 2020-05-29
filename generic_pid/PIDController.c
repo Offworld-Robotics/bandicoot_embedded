@@ -24,41 +24,64 @@
 fix_t runControlAlgorithm(PIDController controller) {
     if (controller == NULL)
         return 0;
+
+    // Temp variable for intermediate calculations
+    fix_t temp;
+
+    // Calculate the proportional term
+    // -------------------------------------------------------------------------
     
-    // Calculate difference between setpoint and measurement
+    // Calculate setpoint-weighted error for the proportional term.
+    temp = fixMultiply(controller->setWeightB, *(controller->setpoint));
+    if (temp == fixOverflow) return fixOverflow;
+
+    fix_t swbError = fixSubtract(temp, *(controller->feedback));
+    if (swbError == fixOverflow) return fixOverflow;
+
+    // Proportional term calculation
+    fix_t pTerm = fixMultiply(controller->kp, swbError);
+    if (pTerm == fixOverflow) return fixOverflow;
+
+    // Calculate the integral term
+    // -------------------------------------------------------------------------
+
+    // Error calculation (no setpoint-weighting for integral term)
     fix_t error = fixSubtract(*(controller->setpoint), *(controller->feedback));
     if (error == fixOverflow) return fixOverflow;
 
-    // Calculate P, I and D controller terms, ensuring overflow does not occur
-    // in each operation.
-
-    // Proportional term
-    fix_t pTerm = fixMultiply(controller->kp, error);
-    if (pTerm == fixOverflow) return fixOverflow;
-
-    // Integral term
-    fix_t deltaI = fixMultiply(controller->ki, error);
+    // Integral accumulation
+    fix_t deltaI = fixMultiply(controller->intCoeff, error);
     if (deltaI == fixOverflow) return fixOverflow;
 
-    deltaI = fixMultiply(deltaI, controller->sampleTime); 
-    if (deltaI == fixOverflow) return fixOverflow;
-
-    fix_t iTerm = fixAdd(controller->iTerm, deltaI);
+    fix_t iTerm = fixAdd(controller->integrator, deltaI);
     if (iTerm == fixOverflow) return fixOverflow;
 
-    controller->iTerm = iTerm;
+    // Calculate the derivative term
+    // -------------------------------------------------------------------------
 
-    // Derivative Term
-    fix_t errorDiff = fixSubtract(error, controller->prevError);
-    if (errorDiff == fixOverflow) return fixOverflow;
+    // Calculate setpoint-weighted error for the derivative term.
+    temp = fixMultiply(controller->setWeightC, (*controller->setpoint));
+    if (temp == fixOverflow) return fixOverflow;
 
-    fix_t dTerm = fixMultiply(controller->kd, errorDiff);
+    fix_t swcError = fixSubtract(temp, *(controller->feedback));
+    if (swcError == fixOverflow) return fixOverflow;
+
+    // Filtered derivative calculation
+    temp = fixSubtract(swcError, controller->prevError);
+    if (temp == fixOverflow) return fixOverflow;
+
+    temp = fixMultiply(temp, controller->derCoeff1);
+    if (temp == fixOverflow) return fixOverflow;
+
+    temp = fixAdd(temp, controller->differentiator);
+    if (temp == fixOverflow) return fixOverflow;
+
+    fix_t dTerm = fixMultiply(temp, controller->derCoeff2);
     if (dTerm == fixOverflow) return fixOverflow;
 
-    dTerm = fixMultiply(dTerm, controller->sampleFreq);
-    if (dTerm == fixOverflow) return fixOverflow;
+    // Sum to get control signal
+    // -------------------------------------------------------------------------
 
-    // Sum to make total control signal
     fix_t controlSignal = fixAdd(fixAdd(pTerm, iTerm), dTerm);
     if (controlSignal == fixOverflow) return fixOverflow;
 
@@ -68,11 +91,13 @@ fix_t runControlAlgorithm(PIDController controller) {
     else if (controlSignal > controller->outputMax)
         controlSignal = controller->outputMax;
 
-    // Set new control signal
-    *(controller->controlSignal) = controlSignal;
+    // Update controller states
+    // -------------------------------------------------------------------------
+    controller->integrator = iTerm;
+    controller->differentiator = dTerm;
+    controller->prevError = swcError;
 
-    // Track previous error term for future derivative calaulation
-    controller->prevError = error;
+    *(controller->controlSignal) = controlSignal;
 
     return controlSignal;
 }

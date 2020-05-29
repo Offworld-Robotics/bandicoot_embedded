@@ -49,9 +49,11 @@ Error checking is performed after each operation as the fixed point number repre
 
 There are parameters for controller output limits which will cause the final output to be saturated if it goes above (or below) these bounds.
 
-The following image shows a block diagram of a continuous PID controller:
+The following image shows a block diagram of a basic continuous PID controller:
 
 ![PID](images/PIDBlockDiagram.png)
+
+The implemented PID controller has the same basic structure but is modified to utilise set point weighting and derivative filtering for improved performance.
 
 ## Main Control Loop
 

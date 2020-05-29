@@ -24,14 +24,20 @@
 
 struct pidController {
     const fix_t kp, ki, kd;
+    const fix_t setWeightB, setWeightC;
+    const fix_t filterCoeff;
     const fix_t sampleTime, sampleFreq;
     const fix_t outputMin, outputMax;
+
+    const fix_t intCoeff;
+    const fix_t derCoeff1, derCoeff2;
 
     volatile fix_t *const setpoint;
     volatile fix_t *const feedback;
     volatile fix_t *const controlSignal;
 
-    fix_t iTerm;
+    fix_t integrator;
+    fix_t differentiator;
     fix_t prevError;
 };
 

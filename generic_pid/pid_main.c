@@ -10,7 +10,9 @@
  */
 
 #include <stddef.h>
+
 #include "PIDController.h"
+#include "ControllerParameters.h"
 
 // Fixed point representation of zero (equivalent to normal 0 but used for
 // emphasis that it is a fixed point number).
@@ -35,17 +37,22 @@ static const uint8_t resetFlag          = 0x80;    // 1000 0000
 static uint8_t actionFlags = CLEAR_ACTION_FLAGS;
 
 // PID Controller initialisation
-// Set parameters here
 struct pidController controller = {
-    .kp = FIX_POINT(1), .ki = FIX_POINT(1), .kd = FIX_POINT(1),
-    .sampleTime = FIX_POINT(0.0001), .sampleFreq = FIX_POINT(10000),
-    .outputMin = FIX_POINT(-10), .outputMax = FIX_POINT(10),
+    .kp = FIX_POINT(KP), .ki = FIX_POINT(KI), .kd = FIX_POINT(KD),
+    .setWeightB = FIX_POINT(SW_B), .setWeightC = FIX_POINT(SW_C),
+    .filterCoeff = FIX_POINT(N),
+    .sampleTime = FIX_POINT(TS), .sampleFreq = FIX_POINT(FS),
+    .outputMin = FIX_POINT(OUTPUT_MIN), .outputMax = FIX_POINT(OUTPUT_MAX),
 
+    .intCoeff = FIX_POINT(INT_COEFF),
+    .derCoeff1 = FIX_POINT(DER_COEFF1), .derCoeff2 = FIX_POINT(DER_COEFF2),
+    
     .setpoint = NULL,
     .feedback = NULL,
     .controlSignal = NULL,
 
-    .iTerm = ZERO,
+    .integrator = ZERO,
+    .differentiator = ZERO,
     .prevError = ZERO
 };
 
@@ -75,7 +82,7 @@ int main() {
             *(controller.feedback) = ZERO;
             *(controller.controlSignal) = ZERO;
 
-            controller.iTerm = ZERO;
+            controller.integrator = ZERO;
             controller.prevError = ZERO;
 
             actionFlags = CLEAR_ACTION_FLAGS;
