@@ -1,6 +1,9 @@
 *.o
 *.pdf
 *.dSYM/
-pid
-fix_test
+bin/*
+tags
+.*.un~
+*.swp
+*.swo
 equations
