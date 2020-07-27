@@ -1,0 +1,9 @@
+*.o
+*.d
+*.pdf
+*.dSYM/
+**/bin/*
+tags
+.*.un~
+*.swp
+*.swo

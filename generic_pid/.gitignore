@@ -1,9 +1,2 @@
-*.o
-*.pdf
-*.dSYM/
-bin/*
-tags
-.*.un~
-*.swp
-*.swo
 equations
+images
