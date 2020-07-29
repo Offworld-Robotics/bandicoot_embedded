@@ -110,7 +110,7 @@ LIBS=$(LIBGCC) $(LIBC) $(LIBM) $(LIBDRIVER)
 # Make Rules
 # ==============================================================================
 
-.PHONY: all debug clean
+.PHONY: all debug clean cleanlib
 
 all: $(patsubst %,$(OUT_DIR)/%.elf,$(ELFS))
 
@@ -119,26 +119,36 @@ debug: all
 
 # Rule to create startup object file
 # Uses different set of flags
-$(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c
+$(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c | $(OBJ_DIR)
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
 # Rule to create object files from C files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Rule to create tivaware driver library object files
-$(OBJ_DIR)/%.o: $(DRIVERLIB)/%.c
+$(OBJ_DIR)/%.o: $(DRIVERLIB)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Rule to create driver library archive
 DRIVERLIB_SRC=$(wildcard $(DRIVERLIB)/*.c)
-$(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(OBJ_DIR)/%.o,$(DRIVERLIB_SRC))
+$(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(OBJ_DIR)/%.o,$(DRIVERLIB_SRC)) | $(LIB_DIR)
 	$(AR) -cr $@ $^
 
 # Rule to create executable ELF file
-$(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(LIBDRIVER) $(STARTUP_OBJ)
+$(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(LIBDRIVER) $(STARTUP_OBJ) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
 
+$(OBJ_DIR): 
+	mkdir -p $@
+$(OUT_DIR): 
+	mkdir -p $@
+$(LIB_DIR): 
+	mkdir -p $@
+
 clean:
-	rm -rf $(OBJ_DIR)/* $(OUT_DIR)/* $(LIB_DIR)/*
+	rm -rf $(OBJ_DIR) $(OUT_DIR)
+
+cleanlib:
+	rm -rf $(LIB_DIR)
 
