@@ -1,7 +1,7 @@
 # Makefile for feedback_io project
 #
 # Author: Aaron Lucas
-# Date Created: 202/07/27
+# Date Created: 2020/07/27
 #
 # Written for the Off-World Robotics Team
 
@@ -25,7 +25,7 @@ OBJ_DIR=obj
 # Project Definitions
 # ==============================================================================
 
-ELFS=blink
+ELFS=blink pwmTest
 
 TIVAWARE=$(SRC_DIR)/tivaware
 DRIVERLIB=$(TIVAWARE)/driverlib
@@ -138,6 +138,10 @@ $(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(OBJ_DIR)/%.o,$(DRIVERLIB_SRC)) | $(L
 # Rule to create executable ELF file
 $(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(LIBDRIVER) $(STARTUP_OBJ) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+$(OUT_DIR)/pwmTest.elf: $(OBJ_DIR/pwmTest.o $(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o $(OBJ_DIR)/PWMControl.o
+	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
+
 
 $(OBJ_DIR): 
 	mkdir -p $@
