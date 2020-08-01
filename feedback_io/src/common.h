@@ -6,7 +6,6 @@
 
 #include "inc/hw_memmap.h"
 #include "driverlib/pin_map.h"
-#include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
 
 #include "inc/tm4c123gh6pm.h"
@@ -21,5 +20,11 @@ enum Status {
 void setSystemClock(void);
 
 enum Status enablePeripheral(uint32_t peripheral);
+
+#ifdef DEBUG
+
+void __error__(char *pcFilename, uint32_t ui32Line);
+
+#endif
 
 #endif

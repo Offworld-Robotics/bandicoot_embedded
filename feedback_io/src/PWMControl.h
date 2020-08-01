@@ -25,6 +25,10 @@ typedef uint16_t thousandths;  // Used for duty cycle so don't need 32 bits of d
 // settings such as PWM pulse period and clock configuration. Each even-numbered
 // PWM signal and its consecutive higher odd-numbered signal are created from the
 // same generator and this is indicated by the grouping of PWM outputs.
+//
+// GPIO pin F0 acts as non-maskable interrupt pin by default and changing its
+// behaviour may have unintended side-effects if other parts of the program
+// utilise this functionality.
 enum PWMOutput {
     PWM00_B6, PWM01_B7,
     PWM02_B4, PWM03_B5,
@@ -62,6 +66,11 @@ void pwmSetClockDivider(enum PWMClockDivider divider);
 // Enables the correct GPIO port and PWM module peripherals, configures the GPIO
 // pin function and configures the PWM generator corresponding to the given PWM
 // signal.
+//
+// WARNING:
+// If the PWM output passed to this function is one of the locked GPIO pins (F0)
+// then it will be unlocked and forced to act as a PWM pin which may affect
+// other parts of the overall system.
 void pwmConfigureOutput(enum PWMOutput pwm);
 
 // Set the period of a PWM signal, given in microseconds.

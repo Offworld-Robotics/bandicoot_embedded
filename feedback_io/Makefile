@@ -139,7 +139,7 @@ $(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(OBJ_DIR)/%.o,$(DRIVERLIB_SRC)) | $(L
 $(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(LIBDRIVER) $(STARTUP_OBJ) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OUT_DIR)/pwmTest.elf: $(OBJ_DIR/pwmTest.o $(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o $(OBJ_DIR)/PWMControl.o
+$(OUT_DIR)/pwmTest.elf: $(OBJ_DIR)/pwmTest.o $(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o $(OBJ_DIR)/PWMControl.o
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 

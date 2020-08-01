@@ -11,9 +11,6 @@
 
 #include "common.h"
 
-#include "inc/hw_memmap.h"
-#include "driverlib/pin_map.h"
-#include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pwm.h"
 
@@ -184,6 +181,14 @@ void pwmConfigureOutput(enum PWMOutput pwm) {
     // PWM outputs 0-9 are in module 0 and outputs 10-19 are in module 1.
     enablePeripheral(PWM_PERIPH(pwm));
 
+    // Some GPIO pins have their functionality locked by default.
+    // Edit the LOCK and COMMIT registers to allow reconfiguration.
+    if (pwm == PWM14_F0) {
+        GPIO_PORTF_LOCK_R = GPIO_LOCK_KEY;  // Unlock commit register
+        GPIO_PORTF_CR_R  |= 1;              // Allow pin F0 to be modified
+        GPIO_PORTF_LOCK_R = 0;              // Lock commit register
+    }
+
     // Configure GPIO pin as a PWM output
     GPIOPinConfigure(GPIO_PIN_CONFIG(pwm));
     GPIOPinTypePWM(GPIO_BASE(pwm), GPIO_PIN(pwm));
@@ -221,6 +226,11 @@ microseconds pwmGetPeriod(enum PWMOutput pwm) {
 // Each PWM output can have its own independent duty cycle, they are not tied to
 // generator blocks.
 void pwmSetDutyCycle(enum PWMOutput pwm, thousandths duty) {
+    // A duty cycle of zero acts as a 100% duty cycle so invert the output
+    // signal.
+    bool invert = (duty == 0);
+    PWMOutputInvert(PWM_BASE(pwm), PWM_OUT_BIT(pwm), invert);
+
     uint32_t clockTicks = PWMGenPeriodGet(PWM_BASE(pwm), PWM_GEN(pwm));
     clockTicks = (clockTicks * duty) / 1000;
 
@@ -231,8 +241,13 @@ void pwmSetDutyCycle(enum PWMOutput pwm, thousandths duty) {
 // This may be significantly different to the duty cycle that was previously set
 // if the PWM period is very low.
 thousandths pwmGetDutyCycle(enum PWMOutput pwm) {
+    /* // If signal is inverted then the duty cycle is 0 */
+    /* if (PWM_BASE(pwm) == PWM0_BASE && (PWM0_INVERT_R & PWM_OUT_BIT(pwm)) || */
+    /*     PWM_BASE(pwm) == PWM1_BASE && (PWM1_INVERT_R & PWM_OUT_BIT(pwm))) */
+    /*     return 0; */
+
     uint32_t clockTicks = PWMPulseWidthGet(PWM_BASE(pwm), PWM_OUT(pwm));
-    return (clockTicks * 1000) / pwmGetPeriod(pwm);
+    return (clockTicks * 1000) / PWMGenPeriodGet(PWM_BASE(pwm), PWM_GEN(pwm));
 }
 
 // Enable or disable the given PWM output.

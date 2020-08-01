@@ -18,3 +18,11 @@ enum Status enablePeripheral(uint32_t peripheral) {
 
     return STATUS_SUCCESS;
 }
+
+#ifdef DEBUG
+
+void __error__(char *pcFilename, uint32_t ui32Line) {
+
+}
+
+#endif
