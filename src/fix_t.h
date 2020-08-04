@@ -80,7 +80,7 @@ static const word_t signMask = (word_t)1 << (WORD_SIZE - 1);
 // Constant representing an overflow has occurred in a fixed-point operation.
 // Defined as the most negative possible value which is least likely to be
 // legitimately calculated.
-static const fix_t fixOverflow = (fix_t)signMask;
+static const fix_t fixOverflow = (fix_t)0 | signMask;
 
 // ============================================================================
 // Function Definitions

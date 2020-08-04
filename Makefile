@@ -18,6 +18,9 @@ LIB_DIR=lib
 # Source code
 SRC_DIR=src
 
+# Source code for testing programs and other testing files
+TEST_DIR=test
+
 # Object files
 OBJ_DIR=obj
 
@@ -25,12 +28,12 @@ OBJ_DIR=obj
 # Project Definitions
 # ==============================================================================
 
-ELFS=blink pwmTest
+ELFS=blink pwmTest simulateMotor
 
 TIVAWARE=$(SRC_DIR)/tivaware
 DRIVERLIB=$(TIVAWARE)/driverlib
 
-INC_DIRS=$(TIVAWARE)
+INC_DIRS=$(TIVAWARE) src
 INC_FLAGS=$(patsubst %,-I%,$(INC_DIRS))
 
 LINKER_SCRIPT=linker.ld
@@ -110,6 +113,8 @@ LIBS=$(LIBGCC) $(LIBC) $(LIBM) $(LIBDRIVER)
 # Make Rules
 # ==============================================================================
 
+COMMON_DEPS=$(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o
+
 .PHONY: all debug clean cleanlib
 
 all: $(patsubst %,$(OUT_DIR)/%.elf,$(ELFS))
@@ -122,8 +127,12 @@ debug: all
 $(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c | $(OBJ_DIR)
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
-# Rule to create object files from C files
+# Rule to create object files from C files in source directory
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -o $@ $<
+
+# Rule to create object files from C files in test directory
+$(OBJ_DIR)/%.o: $(TEST_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Rule to create tivaware driver library object files
@@ -137,13 +146,22 @@ DRIVERLIB_SRC=$(wildcard $(DRIVERLIB)/*.c)
 $(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(DRIVERLIB)/%.o,$(DRIVERLIB_SRC)) | $(LIB_DIR)
 	$(AR) -cr $@ $^
 
-# Rule to create executable ELF file
-$(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(LIBDRIVER) $(STARTUP_OBJ) | $(OUT_DIR)
+# Rules to create executable ELF files
+
+# Generic
+$(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(COMMON_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OUT_DIR)/pwmTest.elf: $(OBJ_DIR)/pwmTest.o $(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o $(OBJ_DIR)/PWMControl.o
+# Specialised
+_PWM_TEST_DEPS=pwmTest PWMControl
+PWM_TEST_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_PWM_TEST_DEPS))
+$(OUT_DIR)/pwmTest.elf: $(PWM_TEST_DEPS) $(COMMON_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
 
+_SIM_MOTOR_DEPS=simulateMotor Motor PIDController fix_t
+SIM_MOTOR_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SIM_MOTOR_DEPS))
+$(OUT_DIR)/simulateMotor.elf: $(SIM_MOTOR_DEPS) $(COMMON_DEPS) | $(OUT_DIR)
+	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 $(OBJ_DIR): 
 	mkdir -p $@

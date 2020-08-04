@@ -8,3 +8,6 @@ tags
 .*.un~
 *.swp
 *.swo
+.vimrc
+.syntastic_c_config
+src/tivaware/examples
