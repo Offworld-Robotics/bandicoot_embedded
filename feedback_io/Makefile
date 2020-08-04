@@ -131,8 +131,10 @@ $(OBJ_DIR)/%.o: $(DRIVERLIB)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Rule to create driver library archive
+# Object files are created in tivaware folder so the library only needs to be
+# built once.
 DRIVERLIB_SRC=$(wildcard $(DRIVERLIB)/*.c)
-$(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(OBJ_DIR)/%.o,$(DRIVERLIB_SRC)) | $(LIB_DIR)
+$(LIBDRIVER): $(patsubst $(DRIVERLIB)/%.c,$(DRIVERLIB)/%.o,$(DRIVERLIB_SRC)) | $(LIB_DIR)
 	$(AR) -cr $@ $^
 
 # Rule to create executable ELF file
