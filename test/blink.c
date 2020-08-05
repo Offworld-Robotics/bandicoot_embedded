@@ -1,6 +1,4 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include "common.h"
 
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
@@ -13,11 +11,6 @@
 #define LED_B GPIO_PIN_2
 #define LED_G GPIO_PIN_3
 #define ALL_LEDS (LED_R|LED_B|LED_G)
-
-#ifdef DEBUG
-void __error__(char *pcFilename, uint32_t ui32Line) {
-}
-#endif
 
 int main(void) {
     SysCtlClockSet(SYSCTL_SYSDIV_4|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
@@ -34,5 +27,5 @@ int main(void) {
         SysCtlDelay(0xF00000);
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }

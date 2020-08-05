@@ -3,6 +3,7 @@
 
 #include "ControllerParameters.h"
 
+// Constants obtained from parameters in ELEC3114 Lab 2
 #define DC_GAIN             23.8095238095
 #define TIME_CONSTANT        0.2293332714
 

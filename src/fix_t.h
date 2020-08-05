@@ -21,7 +21,7 @@
 // be changed.
 
 // Number of fraction bits in fixed point numbers
-#define Q_POINT 16
+#define Q_POINT 12
 
 // Number of bits in fixed point number
 #define WORD_SIZE 32
@@ -30,7 +30,7 @@
 // representation. Equal to 2^Q_POINT which when multiplying, has the same
 // effect as bit shifting Q_POINT bits to the left.  Used in the FIX_POINT(x) macro
 // and is a floating point type to allow conversion of decimal values.
-#define CONVERSION_FACTOR 65536.0
+#define CONVERSION_FACTOR 4096.0
 
 // Fixed point number type.
 // The fix_t type is only for fixed point number representation. Any other data
@@ -91,5 +91,9 @@ fix_t fixAdd(fix_t x, fix_t y);
 fix_t fixSubtract(fix_t x, fix_t y);
 
 fix_t fixMultiply(fix_t x, fix_t y);
+
+/* #ifdef DEBUG */
+float fix2float(fix_t x);
+/* #endif */
 
 #endif

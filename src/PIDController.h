@@ -23,18 +23,18 @@
 #include "fix_t.h"
 
 struct pidController {
-    const fix_t kp, ki, kd;
-    const fix_t setWeightB, setWeightC;
-    const fix_t filterCoeff;
-    const fix_t sampleTime, sampleFreq;
-    const fix_t outputMin, outputMax;
+    fix_t kp, ki, kd;
+    fix_t setWeightB, setWeightC;
+    fix_t filterCoeff;
+    fix_t sampleTime, sampleFreq;
+    fix_t outputMin, outputMax;
 
-    const fix_t intCoeff;
-    const fix_t derCoeff1, derCoeff2;
+    fix_t intCoeff;
+    fix_t derCoeff1, derCoeff2;
 
-    volatile fix_t *const setpoint;
-    volatile fix_t *const feedback;
-    volatile fix_t *const controlSignal;
+    volatile fix_t *setpoint;
+    volatile fix_t *feedback;
+    volatile fix_t *controlSignal;
 
     fix_t integrator;
     fix_t differentiator;

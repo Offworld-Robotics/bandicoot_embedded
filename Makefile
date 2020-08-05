@@ -128,7 +128,7 @@ $(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c | $(OBJ_DIR)
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
 # Rule to create object files from C files in source directory
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Rule to create object files from C files in test directory
@@ -154,14 +154,18 @@ $(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(COMMON_DEPS) | $(OUT_DIR)
 
 # Specialised
 _PWM_TEST_DEPS=pwmTest PWMControl
-PWM_TEST_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_PWM_TEST_DEPS))
-$(OUT_DIR)/pwmTest.elf: $(PWM_TEST_DEPS) $(COMMON_DEPS) | $(OUT_DIR)
-	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
+_PWM_TEST_H_DEPS=ControllerParameters
+PWM_TEST_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_PWM_TEST_DEPS)) $(COMMON_DEPS)
+PWM_TEST_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_PWM_TEST_H_DEPS))
+$(OUT_DIR)/pwmTest.elf: $(PWM_TEST_DEPS) $(PWM_TEST_H_DEPS) | $(OUT_DIR)
+	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(PWM_TEST_DEPS) $(LIBS)
 
 _SIM_MOTOR_DEPS=simulateMotor Motor PIDController fix_t
-SIM_MOTOR_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SIM_MOTOR_DEPS))
-$(OUT_DIR)/simulateMotor.elf: $(SIM_MOTOR_DEPS) $(COMMON_DEPS) | $(OUT_DIR)
-	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $^ $(LIBS)
+_SIM_MOTOR_H_DEPS=ControllerParameters MotorParameters
+SIM_MOTOR_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SIM_MOTOR_DEPS)) $(COMMON_DEPS)
+SIM_MOTOR_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_SIM_MOTOR_H_DEPS))
+$(OUT_DIR)/simulateMotor.elf: $(SIM_MOTOR_DEPS) $(SIM_MOTOR_H_DEPS) | $(OUT_DIR)
+	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(SIM_MOTOR_DEPS) $(LIBS)
 
 $(OBJ_DIR): 
 	mkdir -p $@
@@ -171,8 +175,5 @@ $(LIB_DIR):
 	mkdir -p $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(OUT_DIR)
-
-cleanlib:
-	rm -rf $(LIB_DIR)
+	rm -rf $(OBJ_DIR) $(OUT_DIR) $(LIB_DIR) $(DRIVERLIB)/*.o
 

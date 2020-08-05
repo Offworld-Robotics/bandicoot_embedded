@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "inc/hw_memmap.h"
 #include "driverlib/pin_map.h"
@@ -18,6 +19,8 @@ enum Status {
 };
 
 void setSystemClock(void);
+
+void enableFPU(void);
 
 enum Status enablePeripheral(uint32_t peripheral);
 

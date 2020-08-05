@@ -1,7 +1,13 @@
 #include "common.h"
+#include "driverlib/fpu.h"
 
 void setSystemClock(void) {
     SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+}
+
+void enableFPU(void) {
+    FPUEnable();
+    FPULazyStackingEnable();
 }
 
 enum Status enablePeripheral(uint32_t peripheral) {

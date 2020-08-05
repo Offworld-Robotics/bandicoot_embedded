@@ -2,16 +2,16 @@
 #define CONTROLLER_PARAMETERS_H
 
 // PID Gains
-#define KP                  10.0
-#define KI                  10.0
-#define KD                  10.0
+#define KP                  0.058
+#define KI                  0.5044
+#define KD                  -0.00042527
 
 // Setpoint weights
-#define SW_B                1.0
-#define SW_C                0.0
+#define SW_B                0.0411
+#define SW_C                0.2304
 
 // Filter coefficient
-#define N                   10.0
+#define N                   22.0
 
 // Sampling parameters
 #define FS                  1000.0

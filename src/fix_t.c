@@ -127,3 +127,9 @@ static bool haveSameSign(fix_t x, fix_t y) {
         return true;
     }
 }
+
+/* #ifdef DEBUG */
+float fix2float(fix_t x) {
+    return (float)x / CONVERSION_FACTOR;
+}
+/* #endif */
