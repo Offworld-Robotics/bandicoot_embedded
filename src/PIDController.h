@@ -20,34 +20,25 @@
 #ifndef PID_CONTROLLER_H
 #define PID_CONTROLLER_H
 
-#ifdef FIX_POINT_PID
-#include "fix_t.h"
-typedef fix_t pid_value;
-#else
-typedef float pid_value;
-#endif
-
 struct pidController {
-    pid_value kp, ki, kd;
-    pid_value setWeightB, setWeightC;
-    pid_value filterCoeff;
-    pid_value sampleTime, sampleFreq;
-    pid_value outputMin, outputMax;
+    const float kp, ki, kd;
+    const float setWeightB, setWeightC;
+    const float filterCoeff;
+    const float sampleTime, sampleFreq;
+    const float outputMin, outputMax;
 
-    pid_value intCoeff;
-    pid_value derCoeff1, derCoeff2;
+    const float intCoeff;
+    const float derCoeff1, derCoeff2;
 
-    volatile pid_value *setpoint;
-    volatile pid_value *feedback;
-    volatile pid_value *controlSignal;
+    volatile float *const setpoint;
+    volatile float *const feedback;
+    volatile float *const controlSignal;
 
-    pid_value integrator;
-    pid_value differentiator;
-    pid_value prevError;
+    float integrator;
+    float differentiator;
+    float prevError;
 };
 
-typedef struct pidController *PIDController;
-
-pid_value runControlAlgorithm(PIDController pid);
+float runControlAlgorithm(struct pidController *pid);
 
 #endif

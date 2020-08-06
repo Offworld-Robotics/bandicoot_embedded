@@ -13,8 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint32_t microseconds;
-typedef uint16_t thousandths;  // Used for duty cycle so don't need 32 bits of data
+#include "units.h"
 
 // Collection of all possible PWM outputs and their associated GPIO pins.
 // Constants are encoded as PWM[module][signal]_[port][port pin].
@@ -73,7 +72,24 @@ void pwmSetClockDivider(enum PWMClockDivider divider);
 // other parts of the overall system.
 void pwmConfigureOutput(enum PWMOutput pwm);
 
-// Set the period of a PWM signal, given in microseconds.
+// Set the frequency of a PWM signal, given in kilohertz.
+//
+// If the period corresponding to the given frequency is not a multiple of the
+// PWM clock period then the actual pwm frequency will not match exactly due to
+// quantisation errors.
+//
+// Since the PWM frequency is set in the PWM generators, this function will also
+// change the frequency of the other PWM signal coming from the same generator.
+void pwmSetFrequency(enum PWMOutput pwm, kilohertz frequency);
+
+// Get the pulse frequency of the given PWM output.
+//
+// This may be slightly
+// different to the set value as the actual period is an integer number of clock
+// cycles.
+kilohertz pwmGetFrequency(enum PWMOutput pwm);
+
+// Set the period of a PWM signal, given in milliseconds.
 //
 // If the given period is not a multiple of the PWM clock period then the
 // actual period of the PWM signal will not match exactly due to quantisation
@@ -81,13 +97,16 @@ void pwmConfigureOutput(enum PWMOutput pwm);
 //
 // Since the PWM period is set in the PWM generators, this function will also
 // change the period of the other PWM signal coming from the same generator.
-void pwmSetPeriod(enum PWMOutput pwm, microseconds period);
+void pwmSetPeriod(enum PWMOutput pwm, milliseconds period);
 
-// Get the pulse period of the given PWM output, rounded to the nearest
-// microsecond.
-microseconds pwmGetPeriod(enum PWMOutput pwm);
+// Get the pulse period of the given PWM output.
+//
+// This may be slightly different to the set value as the actual period is an
+// integer number of clock cycles.
+milliseconds pwmGetPeriod(enum PWMOutput pwm);
 
-// Set the duty cycle of a PWM signal, given in increments of 0.1%.
+// Set the duty cycle of a PWM signal, which must be between 0 and 100
+// (inclusive).
 //
 // Rounding errors may cause the actual duty cycle to slightly differ from the
 // given duty cycle, with the duration of the high pulse being rounded to the
@@ -95,12 +114,12 @@ microseconds pwmGetPeriod(enum PWMOutput pwm);
 //
 // Each PWM output can have its own independent duty cycle, they are not tied to
 // generator blocks.
-void pwmSetDutyCycle(enum PWMOutput pwm, thousandths duty);
+void pwmSetDutyCycle(enum PWMOutput pwm, percent duty);
 
 // Get the duty cycle of the given PWM output, rounded to the nearest 0.1%.
 // This may be significantly different to the duty cycle that was previously set
 // if the PWM period is very low.
-thousandths pwmGetDutyCycle(enum PWMOutput pwm);
+percent pwmGetDutyCycle(enum PWMOutput pwm);
 
 // Enable or disable the given PWM output.
 // Enables the PWM generator if enabling the PWM output and disables the

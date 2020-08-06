@@ -80,9 +80,11 @@ AR=$(PREFIX)-ar
 # -DPART_:				Define part number for tivaware library
 # -c:					Compile and assemble into object files
 # $(INC_FLAGS):			Search for header files in non-standard directories
+# -O2					Level 2 compiler optimisations
+# -Dgcc					Define compiler (used by some tivaware utils)
 
 CFLAGS=-mthumb $(CPU) $(FPU) -ffunction-sections -fdata-sections -MD -std=c99 \
-	-Wall  -Wpedantic -DPART_$(PART) -c $(INC_FLAGS) -O -Dgcc #-DFIX_POINT_PID
+	-Wall  -Wpedantic -DPART_$(PART) -c $(INC_FLAGS) -O2 -Dgcc
 
 LDFLAGS=--gc-sections
 
@@ -104,7 +106,6 @@ LIBM=$(shell $(CC) $(CFLAGS) -print-file-name=libm.a)
 
 # Tivaware driver library
 LIBDRIVER=$(LIB_DIR)/libdriver.a
-# LIBDRIVER=$(TIVAWARE)/driverlib/gcc/libdriver.a
 
 # All libraries
 LIBS=$(LIBGCC) $(LIBC) $(LIBM) $(LIBDRIVER)
@@ -119,6 +120,8 @@ COMMON_DEPS=$(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o
 
 all: $(patsubst %,$(OUT_DIR)/%.elf,$(ELFS))
 
+# In debug mode, disable compiler optimisations, generate debugging symbols and
+# activate extra debugging code.
 debug: CFLAGS+=-g -DDEBUG -O0
 debug: all
 
@@ -160,7 +163,7 @@ PWM_TEST_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_PWM_TEST_H_DEPS))
 $(OUT_DIR)/pwmTest.elf: $(PWM_TEST_DEPS) $(PWM_TEST_H_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(PWM_TEST_DEPS) $(LIBS)
 
-_SIM_MOTOR_DEPS=simulateMotor Motor PIDController fix_t PWMControl
+_SIM_MOTOR_DEPS=simulateMotor Motor PIDController PWMControl
 _SIM_MOTOR_H_DEPS=ControllerParameters MotorParameters
 SIM_MOTOR_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SIM_MOTOR_DEPS)) $(COMMON_DEPS)
 SIM_MOTOR_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_SIM_MOTOR_H_DEPS))

@@ -49,7 +49,6 @@ void qeiConfigureForEncoder(enum QEIModule qei, struct Encoder encoder) {
     QEIConfigure(QEI_BASE(qei), config, encoder.numPulses * TICKS_PER_PULSE);
 }
 
-void qeiConfigureVelocityCapture(enum QEIModule qei, enum QEIDivider div, microseconds period) {
-    uint32_t ticks = 
-    QEIVelocityConfigure(QEI_BASE(qei), QEI_DIVIDER(qei), 0);
+void qeiConfigureVelocityCapture(enum QEIModule qei, enum QEIDivider div, milliseconds period) {
+    uint32_t ticks = QEIVelocityConfigure(QEI_BASE(qei), QEI_DIVIDER(qei), 0);
 }

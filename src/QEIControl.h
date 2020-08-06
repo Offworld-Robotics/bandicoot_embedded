@@ -14,18 +14,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint32_t microseconds;
-typedef uint32_t arcsecPerSec;
+#include "units.h"
 
 enum QEIModule {
     QEI0,
     QEI1
-};
-
-struct Angle {
-    uint16_t degrees;
-    uint8_t  minutes;
-    uint8_t  seconds;
 };
 
 struct Encoder {
@@ -67,13 +60,13 @@ enum QEIDivider {
 
 void qeiConfigureForEncoder(enum QEIModule qei, struct Encoder encoder);
 
-void qeiConfigureVelocityCapture(enum QEIModule qei, enum QEIDivider div, microseconds period);
+void qeiConfigureVelocityCapture(enum QEIModule qei, enum QEIDivider div, milliseconds period);
 
 void qeiConfigureInputFilter(enum QEIModule qei, enum QEIFilter filter);
 
 void qeiEnableTimerInterrupt(enum QEIModule qei, void (*handler)(void));
 
-void qeiCalibratePosition(enum QEIModule qei, struct Angle angle);
+void qeiCalibratePosition(enum QEIModule qei, degrees angle);
 
 struct Angle qeiGetPosition(enum QEIModule qei);
 

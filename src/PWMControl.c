@@ -197,7 +197,28 @@ void pwmConfigureOutput(enum PWMOutput pwm) {
     PWMGenConfigure(PWM_BASE(pwm), PWM_GEN(pwm), PWM_GEN_CONFIG);
 }
 
-// Set the period of a PWM signal, given in microseconds.
+// Set the frequency of a PWM signal, given in kilohertz.
+//
+// If the period corresponding to the given frequency is not a multiple of the
+// PWM clock period then the actual pwm frequency will not match exactly due to
+// quantisation errors.
+//
+// Since the PWM frequency is set in the PWM generators, this function will also
+// change the frequency of the other PWM signal coming from the same generator.
+void pwmSetFrequency(enum PWMOutput pwm, kilohertz frequency) {
+    pwmSetPeriod(pwm, 1.0f / frequency);  // Set period in milliseconds
+}
+
+// Get the pulse frequency of the given PWM output.
+//
+// This may be slightly
+// different to the set value as the actual period is an integer number of clock
+// cycles.
+kilohertz pwmGetFrequency(enum PWMOutput pwm) {
+    return 1.0 / pwmGetPeriod(pwm);  // Get period in milliseconds
+}
+
+// Set the period of a PWM signal, given in milliseconds.
 //
 // If the given period is not a multiple of the PWM clock period then the
 // actual period of the PWM signal will not match exactly due to quantisation
@@ -205,19 +226,22 @@ void pwmConfigureOutput(enum PWMOutput pwm) {
 //
 // Since the PWM period is set in the PWM generators, this function will also
 // change the period of the other PWM signal coming from the same generator.
-void pwmSetPeriod(enum PWMOutput pwm, microseconds period) {
-    uint32_t clockTicks = (period * SYS_CLOCK_FREQ_MHZ) >> clockDivider;
+void pwmSetPeriod(enum PWMOutput pwm, milliseconds period) {
+    uint32_t clockTicks = (uint32_t)(period * SYS_CLOCK_FREQ_KHZ) >> clockDivider;
     PWMGenPeriodSet(PWM_BASE(pwm), PWM_GEN(pwm), clockTicks);
 }
 
-// Get the pulse period of the given PWM output, rounded to the nearest
-// microsecond.
-microseconds pwmGetPeriod(enum PWMOutput pwm) {
+// Get the pulse period of the given PWM output.
+//
+// This may be slightly different to the set value as the actual period is an
+// integer number of clock cycles.
+milliseconds pwmGetPeriod(enum PWMOutput pwm) {
     uint32_t clockTicks = PWMGenPeriodGet(PWM_BASE(pwm), PWM_GEN(pwm));
-    return (clockTicks << clockDivider) / SYS_CLOCK_FREQ_MHZ;
+    return (clockTicks << clockDivider) / SYS_CLOCK_FREQ_KHZ;
 }
 
-// Set the duty cycle of a PWM signal, given in increments of 0.1%.
+// Set the duty cycle of a PWM signal, which must be between 0 and 100
+// (inclusive).
 //
 // Rounding errors may cause the actual duty cycle to slightly differ from the
 // given duty cycle, with the duration of the high pulse being rounded to the
@@ -225,14 +249,14 @@ microseconds pwmGetPeriod(enum PWMOutput pwm) {
 //
 // Each PWM output can have its own independent duty cycle, they are not tied to
 // generator blocks.
-void pwmSetDutyCycle(enum PWMOutput pwm, thousandths duty) {
+void pwmSetDutyCycle(enum PWMOutput pwm, percent duty) {
     // A duty cycle of zero acts as a 100% duty cycle so invert the output
     // signal.
     bool invert = (duty == 0);
     PWMOutputInvert(PWM_BASE(pwm), PWM_OUT_BIT(pwm), invert);
 
     uint32_t clockTicks = PWMGenPeriodGet(PWM_BASE(pwm), PWM_GEN(pwm));
-    clockTicks = (clockTicks * duty) / 1000;
+    clockTicks = (uint32_t)((float)clockTicks * duty / 100.0f);
 
     PWMPulseWidthSet(PWM_BASE(pwm), PWM_OUT(pwm), clockTicks);
 }
@@ -240,14 +264,14 @@ void pwmSetDutyCycle(enum PWMOutput pwm, thousandths duty) {
 // Get the duty cycle of the given PWM output, rounded to the nearest 0.1%.
 // This may be significantly different to the duty cycle that was previously set
 // if the PWM period is very low.
-thousandths pwmGetDutyCycle(enum PWMOutput pwm) {
+percent pwmGetDutyCycle(enum PWMOutput pwm) {
     /* // If signal is inverted then the duty cycle is 0 */
     /* if (PWM_BASE(pwm) == PWM0_BASE && (PWM0_INVERT_R & PWM_OUT_BIT(pwm)) || */
     /*     PWM_BASE(pwm) == PWM1_BASE && (PWM1_INVERT_R & PWM_OUT_BIT(pwm))) */
     /*     return 0; */
 
     uint32_t clockTicks = PWMPulseWidthGet(PWM_BASE(pwm), PWM_OUT(pwm));
-    return (clockTicks * 1000) / PWMGenPeriodGet(PWM_BASE(pwm), PWM_GEN(pwm));
+    return (float)(clockTicks * 100) / (float)PWMGenPeriodGet(PWM_BASE(pwm), PWM_GEN(pwm));
 }
 
 // Enable or disable the given PWM output.
