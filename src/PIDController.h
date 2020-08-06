@@ -1,5 +1,5 @@
 /*
- * PIDController.h
+ * PIDController.c
  *
  * An implementation of a generic PID controller algorithm meant for embedded
  * use in a microcontroller.
@@ -20,29 +20,34 @@
 #ifndef PID_CONTROLLER_H
 #define PID_CONTROLLER_H
 
+#ifdef FIX_POINT_PID
 #include "fix_t.h"
+typedef fix_t pid_value;
+#else
+typedef float pid_value;
+#endif
 
 struct pidController {
-    fix_t kp, ki, kd;
-    fix_t setWeightB, setWeightC;
-    fix_t filterCoeff;
-    fix_t sampleTime, sampleFreq;
-    fix_t outputMin, outputMax;
+    pid_value kp, ki, kd;
+    pid_value setWeightB, setWeightC;
+    pid_value filterCoeff;
+    pid_value sampleTime, sampleFreq;
+    pid_value outputMin, outputMax;
 
-    fix_t intCoeff;
-    fix_t derCoeff1, derCoeff2;
+    pid_value intCoeff;
+    pid_value derCoeff1, derCoeff2;
 
-    volatile fix_t *setpoint;
-    volatile fix_t *feedback;
-    volatile fix_t *controlSignal;
+    volatile pid_value *setpoint;
+    volatile pid_value *feedback;
+    volatile pid_value *controlSignal;
 
-    fix_t integrator;
-    fix_t differentiator;
-    fix_t prevError;
+    pid_value integrator;
+    pid_value differentiator;
+    pid_value prevError;
 };
 
 typedef struct pidController *PIDController;
 
-fix_t runControlAlgorithm(PIDController controller);
+pid_value runControlAlgorithm(PIDController pid);
 
 #endif

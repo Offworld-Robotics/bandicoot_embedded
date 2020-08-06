@@ -21,10 +21,11 @@
 
 #include "PIDController.h"
 
-fix_t runControlAlgorithm(PIDController controller) {
-    if (controller == NULL)
+pid_value runControlAlgorithm(PIDController pid) {
+    if (pid == NULL)
         return 0;
 
+#ifdef FIX_POINT_PID
     // Temp variable for intermediate calculations
     fix_t temp;
 
@@ -32,51 +33,51 @@ fix_t runControlAlgorithm(PIDController controller) {
     // -------------------------------------------------------------------------
     
     // Calculate setpoint-weighted error for the proportional term.
-    temp = fixMultiply(controller->setWeightB, *(controller->setpoint));
+    temp = fixMultiply(pid->setWeightB, *(pid->setpoint));
     if (temp == fixOverflow) return fixOverflow;
 
-    fix_t swbError = fixSubtract(temp, *(controller->feedback));
+    fix_t swbError = fixSubtract(temp, *(pid->feedback));
     if (swbError == fixOverflow) return fixOverflow;
 
     // Proportional term calculation
-    fix_t pTerm = fixMultiply(controller->kp, swbError);
+    fix_t pTerm = fixMultiply(pid->kp, swbError);
     if (pTerm == fixOverflow) return fixOverflow;
 
     // Calculate the integral term
     // -------------------------------------------------------------------------
 
     // Error calculation (no setpoint-weighting for integral term)
-    fix_t error = fixSubtract(*(controller->setpoint), *(controller->feedback));
+    fix_t error = fixSubtract(*(pid->setpoint), *(pid->feedback));
     if (error == fixOverflow) return fixOverflow;
 
     // Integral accumulation
-    fix_t deltaI = fixMultiply(controller->intCoeff, error);
+    fix_t deltaI = fixMultiply(pid->intCoeff, error);
     if (deltaI == fixOverflow) return fixOverflow;
 
-    fix_t iTerm = fixAdd(controller->integrator, deltaI);
+    fix_t iTerm = fixAdd(pid->integrator, deltaI);
     if (iTerm == fixOverflow) return fixOverflow;
 
     // Calculate the derivative term
     // -------------------------------------------------------------------------
 
     // Calculate setpoint-weighted error for the derivative term.
-    temp = fixMultiply(controller->setWeightC, (*controller->setpoint));
+    temp = fixMultiply(pid->setWeightC, (*pid->setpoint));
     if (temp == fixOverflow) return fixOverflow;
 
-    fix_t swcError = fixSubtract(temp, *(controller->feedback));
+    fix_t swcError = fixSubtract(temp, *(pid->feedback));
     if (swcError == fixOverflow) return fixOverflow;
 
     // Filtered derivative calculation
-    temp = fixSubtract(swcError, controller->prevError);
+    temp = fixSubtract(swcError, pid->prevError);
     if (temp == fixOverflow) return fixOverflow;
 
-    temp = fixMultiply(temp, controller->derCoeff1);
+    temp = fixMultiply(temp, pid->derCoeff1);
     if (temp == fixOverflow) return fixOverflow;
 
-    temp = fixAdd(temp, controller->differentiator);
+    temp = fixAdd(temp, pid->differentiator);
     if (temp == fixOverflow) return fixOverflow;
 
-    fix_t dTerm = fixMultiply(temp, controller->derCoeff2);
+    fix_t dTerm = fixMultiply(temp, pid->derCoeff2);
     if (dTerm == fixOverflow) return fixOverflow;
 
     // Sum to get control signal
@@ -85,19 +86,29 @@ fix_t runControlAlgorithm(PIDController controller) {
     fix_t controlSignal = fixAdd(fixAdd(pTerm, iTerm), dTerm);
     if (controlSignal == fixOverflow) return fixOverflow;
 
+#else
+    float pTerm = pid->kp * (pid->setWeightB * *(pid->setpoint) - *(pid->feedback));
+    float iTerm = pid->intCoeff * (*(pid->setpoint) - *(pid->feedback)) + pid->integrator;
+    float swcError = pid->setWeightC * *(pid->setpoint) - *(pid->feedback);
+    float dTerm = pid->derCoeff2 * (pid->differentiator + pid->derCoeff1 * (swcError - pid->prevError));
+
+    float controlSignal = pTerm + iTerm + dTerm;
+
+#endif
+
     // Saturate control signal if required
-    if (controlSignal < controller->outputMin)
-        controlSignal = controller->outputMin;
-    else if (controlSignal > controller->outputMax)
-        controlSignal = controller->outputMax;
+    if (controlSignal < pid->outputMin)
+        controlSignal = pid->outputMin;
+    else if (controlSignal > pid->outputMax)
+        controlSignal = pid->outputMax;
 
-    // Update controller states
+    // Update pid states
     // -------------------------------------------------------------------------
-    controller->integrator = iTerm;
-    controller->differentiator = dTerm;
-    controller->prevError = swcError;
+    pid->integrator = iTerm;
+    pid->differentiator = dTerm;
+    pid->prevError = swcError;
 
-    *(controller->controlSignal) = controlSignal;
+    *(pid->controlSignal) = controlSignal;
 
     return controlSignal;
 }

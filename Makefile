@@ -82,7 +82,7 @@ AR=$(PREFIX)-ar
 # $(INC_FLAGS):			Search for header files in non-standard directories
 
 CFLAGS=-mthumb $(CPU) $(FPU) -ffunction-sections -fdata-sections -MD -std=c99 \
-	-Wall  -Wpedantic -DPART_$(PART) -c $(INC_FLAGS) -Dgcc
+	-Wall  -Wpedantic -DPART_$(PART) -c $(INC_FLAGS) -O -Dgcc #-DFIX_POINT_PID
 
 LDFLAGS=--gc-sections
 
@@ -160,7 +160,7 @@ PWM_TEST_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_PWM_TEST_H_DEPS))
 $(OUT_DIR)/pwmTest.elf: $(PWM_TEST_DEPS) $(PWM_TEST_H_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(PWM_TEST_DEPS) $(LIBS)
 
-_SIM_MOTOR_DEPS=simulateMotor Motor PIDController fix_t
+_SIM_MOTOR_DEPS=simulateMotor Motor PIDController fix_t PWMControl
 _SIM_MOTOR_H_DEPS=ControllerParameters MotorParameters
 SIM_MOTOR_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SIM_MOTOR_DEPS)) $(COMMON_DEPS)
 SIM_MOTOR_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_SIM_MOTOR_H_DEPS))
@@ -175,5 +175,5 @@ $(LIB_DIR):
 	mkdir -p $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(OUT_DIR) $(LIB_DIR) $(DRIVERLIB)/*.o
+	rm -rf $(OBJ_DIR)/* $(OUT_DIR)/* $(LIB_DIR)/* $(DRIVERLIB)/*.o
 

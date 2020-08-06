@@ -3,16 +3,26 @@
 #include "driverlib/timer.h"
 #include "driverlib/gpio.h"
 
+#ifdef FIX_POINT_PID
 #include "fix_t.h"
+#define PID_VAL(x)  FIX_POINT(x)
+#else
+#define PID_VAL(x)  x
+#endif
+
 #include "PIDController.h"
 #include "Motor.h"
+#include "PWMControl.h"
 
 #include "MotorParameters.h"
 #include "ControllerParameters.h"
 
-#define ZERO FIX_POINT(0)
+#define ZERO PID_VAL(0)
 
 static void setupTimer(void);
+static void setupGPIO(void);
+static void setupPWM(void);
+
 
 static void timer_isr(void);
 
@@ -20,7 +30,7 @@ static void timer_isr(void);
 static uint32_t getTimerValue(void);
 #endif
 
-volatile fix_t setpointReg, feedbackReg, controlReg;
+volatile pid_value setpointReg, feedbackReg, controlReg;
 
 struct pidController pid;
 struct motor motor;
@@ -29,20 +39,16 @@ int main(void) {
     setSystemClock();
     enableFPU();
 
-    float x = 1.5, y = 2.5;
-    float z = x + y;
-    z = z + 1;
-
     // PID Controller initialisation
     pid = (struct pidController){
-        .kp = FIX_POINT(KP), .ki = FIX_POINT(KI), .kd = FIX_POINT(KD),
-        .setWeightB = FIX_POINT(SW_B), .setWeightC = FIX_POINT(SW_C),
-        .filterCoeff = FIX_POINT(N),
-        .sampleTime = FIX_POINT(TS), .sampleFreq = FIX_POINT(FS),
-        .outputMin = FIX_POINT(OUTPUT_MIN), .outputMax = FIX_POINT(OUTPUT_MAX),
+        .kp = PID_VAL(KP), .ki = PID_VAL(KI), .kd = PID_VAL(KD),
+        .setWeightB = PID_VAL(SW_B), .setWeightC = PID_VAL(SW_C),
+        .filterCoeff = PID_VAL(N),
+        .sampleTime = PID_VAL(TS), .sampleFreq = PID_VAL(FS),
+        .outputMin = PID_VAL(OUTPUT_MIN), .outputMax = PID_VAL(OUTPUT_MAX),
 
-        .intCoeff = FIX_POINT(INT_COEFF),
-        .derCoeff1 = FIX_POINT(DER_COEFF1), .derCoeff2 = FIX_POINT(DER_COEFF2),
+        .intCoeff = PID_VAL(INT_COEFF),
+        .derCoeff1 = PID_VAL(DER_COEFF1), .derCoeff2 = PID_VAL(DER_COEFF2),
         
         .setpoint = &setpointReg,
         .feedback = &feedbackReg,
@@ -56,21 +62,20 @@ int main(void) {
 
     // Motor simulator initialisation
     motor = (struct motor){
-        .dcGain = FIX_POINT(DC_GAIN),
-        .timeConstant = FIX_POINT(TIME_CONSTANT),
+        .dcGain = PID_VAL(DC_GAIN),
+        .timeConstant = PID_VAL(TIME_CONSTANT),
 
         .wPrev = ZERO,
 
-        .coeffV = FIX_POINT(COEFF_V),
-        .coeffWPrev = FIX_POINT(COEFF_W_PREV)
+        .coeffV = PID_VAL(COEFF_V),
+        .coeffWPrev = PID_VAL(COEFF_W_PREV)
     };
         
-        setupTimer();
+    setupTimer();
+    setupGPIO();
+    setupPWM();
 
-    enablePeripheral(SYSCTL_PERIPH_GPIOA);
-    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_7);
-
-    setpointReg = 5;
+    setpointReg = PID_VAL(100);
 
     while (true);
     
@@ -91,12 +96,35 @@ static void setupTimer(void) {
     TimerEnable(TIMER0_BASE, TIMER_A);
 }
 
+static void setupGPIO(void) {
+    enablePeripheral(SYSCTL_PERIPH_GPIOA);
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_6 | GPIO_PIN_7);
+}
+
+static void setupPWM(void) {
+    pwmSetClockDivider(PWM_CLKDIV_1);
+    pwmConfigureOutput(PWM00_B6);
+    pwmSetPeriod(PWM00_B6, 100);
+    pwmSetDutyCycle(PWM00_B6, 0);
+    pwmEnableOutput(PWM00_B6, true);
+}
+
+
 static void timer_isr(void) {
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
 
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_7, GPIO_PIN_7);
     feedbackReg = calculateAngularVelocity(&motor, controlReg);
+#ifdef FIX_POINT_PID
+    if (feedbackReg == fixOverflow || runControlAlgorithm(&pid) == fixOverflow)
+        GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_PIN_6);
+#else
     runControlAlgorithm(&pid);
+#endif
+
+    thousandths duty = controlReg / pid.outputMax * 1000;
+    pwmSetDutyCycle(PWM00_B6, duty);
+
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_7, 0x00);
 
 }

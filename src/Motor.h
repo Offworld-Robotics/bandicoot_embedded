@@ -1,18 +1,23 @@
 #ifndef MOTOR_SIM_H
 #define MOTOR_SIM_H
 
+#ifdef FIX_POINT_PID
 #include "fix_t.h"
+typedef fix_t pid_value;
+#else
+typedef float pid_value;
+#endif
 
 struct motor {
-    fix_t dcGain;
-    fix_t timeConstant;
+    pid_value dcGain;
+    pid_value timeConstant;
 
-    fix_t wPrev;
+    pid_value wPrev;
 
-    fix_t coeffV;
-    fix_t coeffWPrev;
+    pid_value coeffV;
+    pid_value coeffWPrev;
 };
 
-fix_t calculateAngularVelocity(struct motor *motor, fix_t voltage);
+pid_value calculateAngularVelocity(struct motor *motor, pid_value voltage);
 
 #endif
