@@ -107,15 +107,15 @@ static const uint32_t pwmOutBits[NUM_PWM_OUTPUTS] = {
 };
 
 static const uint8_t gpioPins[NUM_PWM_OUTPUTS] = {
-    (1 << 6), (1 << 7),
-    (1 << 4), (1 << 5),
-    (1 << 4), (1 << 5),
-    (1 << 4), (1 << 0), (1 << 5), (1 << 1),
+    GPIO_PIN_6, GPIO_PIN_7,
+    GPIO_PIN_4, GPIO_PIN_5,
+    GPIO_PIN_4, GPIO_PIN_5,
+    GPIO_PIN_4, GPIO_PIN_0, GPIO_PIN_5, GPIO_PIN_1,
 
-    (1 << 0), (1 << 1),
-    (1 << 6), (1 << 4), (1 << 7), (1 << 5),
-    (1 << 0), (1 << 1),
-    (1 << 2), (1 << 3)
+    GPIO_PIN_0, GPIO_PIN_1,
+    GPIO_PIN_6, GPIO_PIN_4, GPIO_PIN_7, GPIO_PIN_5,
+    GPIO_PIN_0, GPIO_PIN_1,
+    GPIO_PIN_2, GPIO_PIN_3
 };
 
 

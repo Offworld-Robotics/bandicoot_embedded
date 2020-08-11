@@ -21,8 +21,26 @@ enum QEIModule {
     QEI1
 };
 
+enum QEIIndexPin {
+    QEI0_IDX_D3 = 0,    // QEI0 Default
+    QEI0_IDX_F4,
+    QEI1_IDX_C4         // Only pin for QEI1
+};
+
+enum QEIPhaseAPin {
+    QEI0_PHA_D6 = 3,    // QEI0 Default
+    QEI0_PHA_F0,        // Protected NMI Pin
+    QEI1_PHA_C5         // Only pin for QEI1
+};
+
+enum QEIPhaseBPin {
+    QEI0_PHB_D7 = 6,    // Protected NMI Pin
+    QEI0_PHB_F1,        // QEI0 Default
+    QEI1_PHB_C6         // Only pin for QEI1
+};
+
 struct Encoder {
-    uint32_t numPulses;
+    uint32_t pulsesPerRev;
     bool hasIndexSignal;
     bool channelsSwapped;
 };
@@ -48,7 +66,7 @@ enum QEIFilter {
 };
 
 enum QEIDivider {
-    QEI_DIVIDE_1,
+    QEI_DIVIDE_1 = 0,
     QEI_DIVIDE_2,
     QEI_DIVIDE_4,
     QEI_DIVIDE_8,
@@ -58,9 +76,11 @@ enum QEIDivider {
     QEI_DIVIDE_128
 };
 
+void qeiConfigureModule0Pins(enum QEIIndexPin idx, enum QEIPhaseAPin phA, enum QEIPhaseBPin phB);
+
 void qeiConfigureForEncoder(enum QEIModule qei, struct Encoder encoder);
 
-void qeiConfigureVelocityCapture(enum QEIModule qei, enum QEIDivider div, milliseconds period);
+void qeiConfigureVelocityCapture(enum QEIModule qei, enum QEIDivider div, kilohertz sampleFreq);
 
 void qeiConfigureInputFilter(enum QEIModule qei, enum QEIFilter filter);
 
@@ -68,8 +88,10 @@ void qeiEnableTimerInterrupt(enum QEIModule qei, void (*handler)(void));
 
 void qeiCalibratePosition(enum QEIModule qei, degrees angle);
 
-struct Angle qeiGetPosition(enum QEIModule qei);
+degrees qeiGetPosition(enum QEIModule qei);
 
-arcsecPerSec qeiGetVelocity(enum QEIModule qei);
+struct AngularVel qeiGetVelocity(enum QEIModule qei);
+
+void qeiEnableModule(enum QEIModule qei, bool enable);
 
 #endif

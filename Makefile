@@ -28,7 +28,7 @@ OBJ_DIR=obj
 # Project Definitions
 # ==============================================================================
 
-ELFS=blink pwmTest simulateMotor
+ELFS=blink pwmTest simulateMotor qeiTest
 
 TIVAWARE=$(SRC_DIR)/tivaware
 DRIVERLIB=$(TIVAWARE)/driverlib
@@ -116,13 +116,13 @@ LIBS=$(LIBGCC) $(LIBC) $(LIBM) $(LIBDRIVER)
 
 COMMON_DEPS=$(LIBDRIVER) $(STARTUP_OBJ) $(OBJ_DIR)/common.o
 
-.PHONY: all debug clean cleanlib
+.PHONY: all debug clean tags
 
 all: $(patsubst %,$(OUT_DIR)/%.elf,$(ELFS))
 
 # In debug mode, disable compiler optimisations, generate debugging symbols and
 # activate extra debugging code.
-debug: CFLAGS+=-g -DDEBUG -O0
+debug: CFLAGS+=-g3 -DDEBUG -O0
 debug: all
 
 # Rule to create startup object file
@@ -157,18 +157,26 @@ $(OUT_DIR)/%.elf: $(OBJ_DIR)/%.o $(COMMON_DEPS) | $(OUT_DIR)
 
 # Specialised
 _PWM_TEST_DEPS=pwmTest PWMControl
-_PWM_TEST_H_DEPS=ControllerParameters
+_PWM_TEST_H_DEPS=ControllerParameters units
 PWM_TEST_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_PWM_TEST_DEPS)) $(COMMON_DEPS)
 PWM_TEST_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_PWM_TEST_H_DEPS))
 $(OUT_DIR)/pwmTest.elf: $(PWM_TEST_DEPS) $(PWM_TEST_H_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(PWM_TEST_DEPS) $(LIBS)
 
 _SIM_MOTOR_DEPS=simulateMotor Motor PIDController PWMControl
-_SIM_MOTOR_H_DEPS=ControllerParameters MotorParameters
+_SIM_MOTOR_H_DEPS=ControllerParameters MotorParameters units
 SIM_MOTOR_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SIM_MOTOR_DEPS)) $(COMMON_DEPS)
 SIM_MOTOR_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_SIM_MOTOR_H_DEPS))
 $(OUT_DIR)/simulateMotor.elf: $(SIM_MOTOR_DEPS) $(SIM_MOTOR_H_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(SIM_MOTOR_DEPS) $(LIBS)
+
+_QEI_TEST_DEPS=qeiTest QEIControl
+_QEI_TEST_H_DEPS=units
+QEI_TEST_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_QEI_TEST_DEPS)) $(COMMON_DEPS)
+QEI_TEST_H_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_QEI_TEST_H_DEPS))
+$(OUT_DIR)/qeiTest.elf: $(QEI_TEST_DEPS) $(SIM_MOTOR_H_DEPS) | $(OUT_DIR)
+	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(QEI_TEST_DEPS) $(LIBS)
+
 
 $(OBJ_DIR): 
 	mkdir -p $@
@@ -176,6 +184,9 @@ $(OUT_DIR):
 	mkdir -p $@
 $(LIB_DIR): 
 	mkdir -p $@
+
+tags:
+	ctags -R src test
 
 clean:
 	rm -rf $(OBJ_DIR)/* $(OUT_DIR)/* $(LIB_DIR)/* $(DRIVERLIB)/*.o

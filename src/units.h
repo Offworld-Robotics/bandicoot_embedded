@@ -18,7 +18,19 @@ typedef float kilohertz;
 
 // Angular units
 typedef float degrees;
+typedef float radians;
 typedef float rpm;
+typedef float radPerSec;
+
+enum RotateDir {
+    CLOCKWISE,
+    ANTICLOCKWISE
+};
+
+struct AngularVel {
+    enum RotateDir  direction;
+    rpm             speed;
+};
 
 // Other units
 typedef float percent;
