@@ -144,7 +144,8 @@ static const uint32_t clockDividers[NUM_CLOCK_DIVIDERS] = {
 };
 
 // Macros for lookup tables
-// Some lookup tables have strange indexing
+// Some lookup tables have strange indexing to save space so these macros should
+// be used instead of indexing the arrays manually.
 #define GPIO_PERIPH(pwm)        gpioPeripherals[pwm]
 #define PWM_PERIPH(pwm)         pwmPeripherals[(pwm) / PWMS_PER_MODULE]
 #define GPIO_PIN_CONFIG(pwm)    gpioPinConfigs[pwm]

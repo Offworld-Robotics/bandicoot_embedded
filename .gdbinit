@@ -1,6 +1,9 @@
 target extended-remote :3333
+
 set history save on
+
 monitor reset halt
+
 break main
 
 define hook-quit
@@ -8,4 +11,5 @@ define hook-quit
 end
 
 load
+
 run

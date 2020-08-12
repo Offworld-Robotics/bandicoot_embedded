@@ -9,7 +9,7 @@
 // number of pulses, and one for velocity which will continuously output pulses.
 // The following definition activates the position test. Comment it out for the
 // velocity test.
-/* #define TEST_POSITION */
+#define TEST_POSITION
 
 // Interrupt Service Routines
 static void qei_isr(void);
@@ -28,7 +28,7 @@ volatile uint32_t edgeCounter = 0;
 
 // Constants
 #ifdef TEST_POSITION
-static const uint32_t maxEdges = 4;
+static const uint32_t maxEdges = 49;
 static const uint32_t edgeInterrupts = PWM_INT_CNT_ZERO | PWM_INT_CNT_AU |
                                        PWM_INT_CNT_LOAD | PWM_INT_CNT_AD;
 #endif
@@ -36,7 +36,7 @@ static const uint32_t edgeInterrupts = PWM_INT_CNT_ZERO | PWM_INT_CNT_AU |
 static const struct Encoder encoder = {
     .pulsesPerRev = 12,
     .hasIndexSignal = true,
-    .channelsSwapped = true
+    .swapPhases = true
 };
 
 
@@ -94,7 +94,7 @@ static void pwm_isr(void) {
 static void setupQEI(void) {
     qeiConfigureForEncoder(QEI1, encoder);
     qeiConfigureVelocityCapture(QEI1, QEI_DIVIDE_1, 0.01);
-    qeiEnableTimerInterrupt(QEI1, qei_isr);
+    qeiInterruptVelocity(QEI1, qei_isr);
     qeiCalibratePosition(QEI1, 0.0f);
     qeiEnableModule(QEI1, true);
 
