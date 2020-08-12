@@ -1,74 +1,109 @@
-Generic PID
-===========
+Bandicoot Embedded
+===================
 
-An implementation of a PID controller for a generic microcontroller in C.
+This repo contains all the code which runs on the "Bandicoot" rover, from the Off-World Robotics team at UNSW.
 
-## Features
+Bandicoot is still a work in progress and hence this repo may change significantly over time as various systems are developed.
 
-This implementation is designed for use in embedded systems and as such has a constant time and memory complexity, and does not use any of the following:
+This code is designed to run on TI's [TM4C123G Launchpad](https://www.ti.com/tool/EK-TM4C123GXL) which contains an ARM Cortex-M4 TM4C123GH6PM microcontroller.
 
-* Dynamic memory allocation (i.e. _malloc()_)
-* Standard library functions
-* Floating point numbers/arithmetic
-* Division operations
+All code is currently written in C.
 
-This implementation is generic and can be used on most microcontrollers.
+## Project Structure
 
-## Fixed Point Arithmetic
+The current project contains the following modules:
 
-As floating point types are not used in this implementation, a fixed point number representation is used instead. The `fix_t.h` and `fix_t.c` files implement a flexible fixed point number type, `fix_t`, along with addition, subtraction and multiplication operations. The data type of the fixed point number as well as the number of bits available for the fractional part can be customised by changing the `WORD_SIZE` and `Q_POINT` definitions in `fix_t.h`, along with the `CONVERSION_FACTOR` constant.
+* Proportional-Integral-Derivative (PID) controller
+* Pulse-width modulation (PWM) interface
+* Quadrature encoder interface (QEI)
+* Fixed-point math library (currently unused)
 
-The tests for the `fix_t` type are designed for a 32-bit word size and 16-bit fractional part.
+These modules are located in the `src/` directory along with TI's Tivaware software library source code.
 
-#### Definitions
+In addition to these modules, test programs have been written to verify their operation. All code used for testing purposes is located in the `test/` directory.
 
-Four custom data types are defined. Their names and purposes are summarised below:
+## Building and Running
 
-* `word_t`: An unsigned type which is used for modifying the bits of a fixed point number.
-* `fix_t`: A signed type which represents the fixed point number and is used for operations which require interpretation of positive and negative.
-* `dword_t`: An unsigned type which is double the length of `word_t` and is used for holding the result of a multiplication.
-* `dint_t`: A signed type which is double the length of `fix_t` and is used for type conversion in multiplication.
+### Dependencies
 
+This project requires the following:
 
+* GNU Make
+* OpenOCD
+* [GNU ARM Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
 
-A macro, `FIX_POINT()` is also defined which allows the conversion of integer and decimal numbers to their fixed-point representation, with **rounding** occurring instead of **truncating**. This macro relies on the `CONVERSION_FACTOR` constant being set to `2^Q_POINT` and being a floating point type (by including a '.0' at the end of the integer).
+GNU Make and OpenOCD can be installed via a package manager if they are not installed already. The GNU ARM embedded toolchain must be built from source and may require the binaries to be symlinked to `/usr/local/bin`. The **Troubleshooting** section below may help with installing the ARM embedded toolchain.
 
+### Build & Run Processes
 
+1. Install all above dependencies
+2. Download/clone this git repo:
 
-Addition, subtraction and multiplication functions are implemented which indicate if an overflow has occurred. These functions are `fixAdd()`, `fixSubtract()` and `fixMultiply()` respectively.
+    `git clone https://github.com/Offworld-Robotics/bandicoot_embedded`
 
-Multiplication is performed by using a double-length data type and then truncating the result.
+3. Run `make` to build the project
+4. Make sure the `PWR SELECT` switch next to the USB port on the board is set to `DEBUG`
+5. Start an OpenOCD process in the background to connect to the TM4C123G board:
 
-## PID Controller & Algorithm
+    `openocd -f /usr/local/share/openocd/scripts/board/ek-tm4c123gxl.cfg &`
 
-The PID controller is contained in a structure, `struct pidController`, which contains the controller parameters, input and output registers and other internal variables. All values in the controller are fixed point and the aforementioned fixed point operations are used. 
+6. Load the program ELF file onto the board:
 
-This structure is generic and can be used with a wide variety of microcontrollers as the inputs and outputs of the controller are pointers which can be set to specific memory location such as the input for a DAC.
+    `arm-none-eabi-gdb bin/[program].elf`
 
-Error checking is performed after each operation as the fixed point number representation has a greatly reduced range compared to standard integer types and the risk of overflow is much higher. When overflow occurs, the control algorithm exits early, allowing the main program to handle the error, which currently resets the controller.
+7. If successful, the program will be loaded onto the board and be stopped at `main`. Type `c` then enter to continue the operation of the program.
 
-There are parameters for controller output limits which will cause the final output to be saturated if it goes above (or below) these bounds.
+## Module Descriptions
 
-The following image shows a block diagram of a basic continuous PID controller:
+### PID Controller
 
-![PID](images/PIDBlockDiagram.png)
+A configurable, generic Proportional-Integral-Derivative controller which can be used to control external hardware such as a DC motor. Basic parameters such as Kp, Ki and Kd can be set, as well as setpoint weights (b, c) and a derivative filter coefficient (N). 
 
-The implemented PID controller has the same basic structure but is modified to utilise set point weighting and derivative filtering for improved performance.
+This controller implementation avoids division operations while running by pre-calculating equation coefficients.  For ease of use, the basic parameters can be set in the `src/ControllerParameters.h` file and, which will automatically calculate the correct equation coefficients. Then a controller can be instantiated using the code from `test/simulateMotor.c`
 
-## Main Control Loop
+The controller takes two inputs, the setpoint reference and feedback value, and provides one output, the control signal. These inputs and outputs are memory locations so that the controller can read and write from registers or memory already in use by the main program.
 
-The main program which runs on the microcontroller is responsible not only for calculating the control output of the PID controller, but also handling errors, reading inputs from sensors and setting analogue voltage outputs.
+### PWM Interface
 
-A timer will run an iteration of the control algorithm periodically, which involved updating the setpoint (if necessary) and obtaining feedback from the controlled system before running the PID calculation.
+A control interface for the two PWM modules on the TM4C123GH6PM microcontroller. Allows GPIO pins to be configured for PWM outputs with a variable frequency and duty cycle.
 
-The setpoint will likely be fed in from an external process such as a higher level controller, and the feedback signal will be read through an analogue-to-digital converter (ADC) on the microcontroller (if it has one).
+This interface abstracts away much of the hardware control which is required to use the PWM interface such as enabling peripherals and configuring GPIO pins, and allows PWM signals to be sent using a few function calls. 
 
-Once the control output is calculated, a digital-to-analogue converter must be run to convert it into a voltage which is used to control the system.
+All possible PWM output pins are referenced by pin number and this is all that is needed to activate a PWM pin, as opposed to dealing with multiple system peripherals and pin configurations, etc.
 
-These three processes all have respective functions in the main program allowing them to be customised to the choice of microcontroller.
+Please refer to the source code for detailed interface documentation.
 
-The timer will trigger an interrupt which sets actions flags for the main control loop. This is to make the interrupt service routine as short as possible and also allows for other actions to be added in the future by adding more action flags. Currently only two flags exist, a reset flag which resets the controller in the event of an overflow or other error, and a controller iteration flag which runs another iteration of the PID controller.
+### Quadrature Encoder Interface (QEI)
 
-The following image shows a flow diagram of the main program:
+A control interface for the two QEI modules on the TM4C123GH6PM microcontroller. Allows GPIO pins to be used as inputs from a quadrature encoder to measure position and velocity.
 
-![Main program flow diagram](images/FlowDiagram.png)
+Similarly to the PWM interface, this module abstracts much of the hardware control away, in favour of using a few, much simpler function calls to configure and use quadrature encoders.
+
+Please refer to the source code for detailed interface documentation.
+
+## Troubleshooting
+
+### Installing ARM Embedded Toolchain (Ubuntu)
+
+Steps slightly modified from [this](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) StackExchange post.
+
+1. Download the latest [source code](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
+2. Extract into an installation folder, e.g. `/usr/local/opt/`
+```
+    mkdir -p /usr/local/opt/arm-none-eabi/
+    tar xvf gcc-arm-none-eabi-xxx.tar.bz2 
+    mv gcc-arm-none-eabi-xxx/* /usr/local/opt/arm-none-eabi
+    rm -r gcc-arm-none-eabi-xxx
+```
+
+3. Create symbolic links for all toolchain binaries into a folder on your `PATH`, e.g. `/usr/local/bin/`
+```
+    for bin in /usr/local/opt/arm-none-eabi/bin/*; do sudo ln -s /usr/local/bin/$(basename $bin); done
+```
+
+4. Install and symlink external dependencies
+```
+    sudo apt install libncurses-dev
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+```
