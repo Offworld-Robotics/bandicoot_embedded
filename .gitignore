@@ -12,3 +12,4 @@ tags
 .syntastic_c_config
 src/tivaware/examples
 .gdb_history
+*.old

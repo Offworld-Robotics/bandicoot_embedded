@@ -107,3 +107,10 @@ Steps slightly modified from [this](https://askubuntu.com/questions/1243252/how-
     sudo ln -s /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
     sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
 ```
+### Running GDB With Correct Settings
+
+The `.gdbinit` file in this project will set up GDB when it is run and make flashing and debugging more streamlined.
+
+This file may need permission to be loaded which can be done by adding `add-auto-load-safe-path [path/to/project]/.gdbinit` to your `~/.gdbinit` file. This can be done with the command
+
+`echo "add-auto-load-safe-path [path/to/project]/.gdbinit" >> ~/.gdbinit`
