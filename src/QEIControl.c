@@ -176,7 +176,8 @@ void qeiConfigureModule0Pins(enum QEIIndexPin idx, enum QEIPhaseAPin phA, enum Q
     QEI_DATA(QEI0).phBPin = phB;
 }
 
-// Configure the QEI module for the given encoder specifcations.
+// Configure the QEI module for the given encoder specifcations. Configures the
+// module for position measurement only.
 //
 // Enables all required peripherals and configures all pins. This will override
 // the behaviour of locked NMI pins if any locked pins are specified for use.
