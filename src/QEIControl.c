@@ -296,9 +296,9 @@ struct AngularVel qeiGetVelocity(enum QEIModule qei) {
     // Calculate speed in two steps, the first of which involves integer
     // calculations only.
     uint32_t ticks = QEIVelocityGet(QEI_BASE(qei));
-    uint32_t intCalc = ticks * secondsPerMin / (2 * data.pulsesPerRev);
+    uint32_t intCalc = ticks * secondsPerMin;
 
-    rpm speed = (float)intCalc * khzToHz(data.sampleFrequency);
+    rpm speed = (float)intCalc * khzToHz(data.sampleFrequency) / (2.0 * (float)data.pulsesPerRev);
     velocity.speed = speed;
 
     // Don't compare float directly to 0

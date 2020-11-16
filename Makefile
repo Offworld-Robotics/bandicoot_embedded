@@ -28,7 +28,7 @@ OBJ_DIR=obj
 # Project Definitions
 # ==============================================================================
 
-ELFS=blink pwmTest simulateMotor qeiTest
+ELFS=blink pwmTest simulateMotor qeiTest system
 
 TIVAWARE=$(SRC_DIR)/tivaware
 DRIVERLIB=$(TIVAWARE)/driverlib
@@ -131,7 +131,8 @@ $(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c | $(OBJ_DIR)
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
 # Rule to create object files from C files in source directory
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h | $(OBJ_DIR)
+# $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Rule to create object files from C files in test directory
@@ -173,9 +174,16 @@ $(OUT_DIR)/simulateMotor.elf: $(SIM_MOTOR_DEPS) $(SIM_MOTOR_H_DEPS) | $(OUT_DIR)
 _QEI_TEST_DEPS=qeiTest QEIControl
 _QEI_TEST_H_DEPS=units
 QEI_TEST_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_QEI_TEST_DEPS)) $(COMMON_DEPS)
-QEI_TEST_H_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_QEI_TEST_H_DEPS))
-$(OUT_DIR)/qeiTest.elf: $(QEI_TEST_DEPS) $(SIM_MOTOR_H_DEPS) | $(OUT_DIR)
+QEI_TEST_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_QEI_TEST_H_DEPS))
+$(OUT_DIR)/qeiTest.elf: $(QEI_TEST_DEPS) $(QEI_TEST_H_DEPS) | $(OUT_DIR)
 	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(QEI_TEST_DEPS) $(LIBS)
+
+_SYSTEM_DEPS=system PWMControl QEIControl PIDController
+_SYSTEM_H_DEPS=ControllerParameters units
+SYSTEM_DEPS=$(patsubst %,$(OBJ_DIR)/%.o,$(_SYSTEM_DEPS)) $(COMMON_DEPS)
+SYSTEM_H_DEPS=$(patsubst %,$(SRC_DIR)/%.h,$(_SYSTEM_H_DEPS))
+$(OUT_DIR)/system.elf: $(SYSTEM_DEPS) $(SYSTEM_H_DEPS) | $(OUT_DIR)
+	$(LD) -T $(LINKER_SCRIPT) $(LDFLAGS) -o $@ $(SYSTEM_DEPS) $(LIBS)
 
 
 $(OBJ_DIR): 

@@ -24,6 +24,7 @@
 float runControlAlgorithm(struct pidController *pid) {
     if (pid == NULL)
         return 0;
+
     float pTerm = pid->kp * (pid->setWeightB * *(pid->setpoint) - *(pid->feedback));
     float iTerm = pid->intCoeff * (*(pid->setpoint) - *(pid->feedback)) + pid->integrator;
     float swcError = pid->setWeightC * *(pid->setpoint) - *(pid->feedback);

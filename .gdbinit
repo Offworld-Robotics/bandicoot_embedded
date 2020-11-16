@@ -4,7 +4,7 @@ set history save on
 
 monitor reset halt
 
-break main
+# break main
 
 define hook-quit
     set confirm off
@@ -12,4 +12,4 @@ end
 
 load
 
-run
+# run
